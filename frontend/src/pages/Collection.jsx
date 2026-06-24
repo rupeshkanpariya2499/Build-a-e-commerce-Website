@@ -6,11 +6,12 @@ import ProductItem from '../components/ProductItem'
 
 const Collection = () => {
 
-  const {products} = useContext(ShopContext);
+  const {products, search, showSearch} = useContext(ShopContext);
   const [showFilter, setShowFilter] = useState(false);
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [category, setCategory] = useState([]);
   const [subCategory, setSubCategory] = useState([]);
+  const [sortType, setSortType] = useState('relevant');
 
   const toggleCategory = (event) => {
 
@@ -22,13 +23,61 @@ const Collection = () => {
     }
   }
 
-  useEffect(() => {
-    setFilteredProducts(products);
-  }, [])
+  const toggleSubCategory = (event) => {
+
+    if (subCategory.includes(event.target.value)) {
+      setSubCategory(prev => prev.filter(item => item !== event.target.value))
+    }
+    else {
+      setSubCategory(prev => [...prev, event.target.value])
+    }
+  }
+
+  const applyFilter = () => {
+    let productsCopy = products.slice();
+
+    if (showSearch && search) {
+      productsCopy = productsCopy.filter(item => item.name.toLowerCase().includes(search.toLowerCase()));
+    }
+
+    if (category.length > 0) {
+      productsCopy = productsCopy.filter(item => category.includes(item.category));
+    }
+
+    if (subCategory.length > 0) {
+      productsCopy = productsCopy.filter(item => subCategory.includes(item.subCategory));
+    }
+
+    setFilteredProducts(productsCopy)
+  }
+
+  const sortProducts = () => {
+    
+    let filteredProductsCopy = filteredProducts.slice();
+
+    switch (sortType) {
+      case 'low-high':
+        setFilteredProducts(filteredProductsCopy.sort((a, b) => (a.price - b.price)));
+        break;
+
+      case 'high-low':
+        setFilteredProducts(filteredProductsCopy.sort((a, b) => (b.price - a.price)));
+        break;
+
+      default:
+        applyFilter();
+        break;
+    }
+
+  }
 
   useEffect(() => {
-    console.log(category);
-  }, [category])
+    applyFilter();
+  }, [category, subCategory, search, showSearch])
+
+  useEffect(() => {
+    sortProducts();
+  }, [sortType])
 
   return (
     <div className='flex flex-col sm:flex-row gap-1 sm:gap-10 pt-10 border-t'>
@@ -44,10 +93,10 @@ const Collection = () => {
           <p className='mb-3 text-sm font-medium'>CATEGORIES</p>
           <div className='flex flex-col gap-2 text-sm font-light text-gray-700'>
             <p className='flex gap-2'>
-              <input className='w-3' type="checkbox" value={'Mens'} onChange={toggleCategory}/> Mens
+              <input className='w-3' type="checkbox" value={'Men'} onChange={toggleCategory}/> Men
             </p>
             <p className='flex gap-2'>
-              <input className='w-3' type="checkbox" value={'Womens'} onChange={toggleCategory}/> Womens
+              <input className='w-3' type="checkbox" value={'Women'} onChange={toggleCategory}/> Women
             </p>
             <p className='flex gap-2'>
               <input className='w-3' type="checkbox" value={'Kids'} onChange={toggleCategory}/> Kids
@@ -60,13 +109,13 @@ const Collection = () => {
           <p className='mb-3 text-sm font-medium'>TYPE</p>
           <div className='flex flex-col gap-2 text-sm font-light text-gray-700'>
             <p className='flex gap-2'>
-              <input className='w-3' type="checkbox" value={'Topwear'}/> Topwear
+              <input className='w-3' type="checkbox" value={'Topwear'} onChange={toggleSubCategory}/> Topwear
             </p>
             <p className='flex gap-2'>
-              <input className='w-3' type="checkbox" value={'Bottomwear'}/> Bottomwear
+              <input className='w-3' type="checkbox" value={'Bottomwear'} onChange={toggleSubCategory}/> Bottomwear
             </p>
             <p className='flex gap-2'>
-              <input className='w-3' type="checkbox" value={'Winterwear'}/> Winterwear
+              <input className='w-3' type="checkbox" value={'Winterwear'} onChange={toggleSubCategory}/> Winterwear
             </p>
           </div>
         </div>
@@ -78,7 +127,7 @@ const Collection = () => {
           <Title text1={'All'} text2={' Collections'} />
 
           {/* Product Sort */}
-          <select className='border-2 border-gray-300 text-sm px-2'>
+          <select onChange={(event) => setSortType(event.target.value)} className='border-2 border-gray-300 text-sm px-2'>
             <option value="relevant">Relevant</option>
             <option value="low-high">Price: Low to High</option>
             <option value="high-low">Price: High to Low</option>
